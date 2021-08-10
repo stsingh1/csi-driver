@@ -23,7 +23,7 @@ import (
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/api/resource"
 
-	log "github.com/hpe-storage/common-host-libs/logger"
+	logger "github.com/hpe-storage/common-host-libs/logger"
 	"github.com/hpe-storage/common-host-libs/model"
 	"github.com/hpe-storage/common-host-libs/stringformat"
 	"github.com/hpe-storage/common-host-libs/util"
@@ -416,7 +416,7 @@ func (driver *Driver) stageVolume(
 	volumeContext map[string]string) (*StagingDevice, error) {
 
 	log.Tracef(">>>>> stageVolume, volumeID: %s, stagingMountPoint: %s, volumeAccessType: %v, volCap: %v, publishContext: %v, volumeContext: %v",
-		volumeID, stagingMountPoint, volAccessType.String(), volCap, log.MapScrubber(publishContext), volumeContext)
+		volumeID, stagingMountPoint, volAccessType.String(), volCap, logger.MapScrubber(publishContext), volumeContext)
 	defer log.Trace("<<<<< stageVolume")
 
 	// serialize stage requests
@@ -481,7 +481,7 @@ func (driver *Driver) setupDevice(
 	secrets map[string]string,
 	publishContext map[string]string) (*model.Device, error) {
 
-	log.Tracef(">>>>> setupDevice, volumeID: %s, publishContext: %v", volumeID, log.MapScrubber(publishContext))
+	log.Tracef(">>>>> setupDevice, volumeID: %s, publishContext: %v", volumeID, logger.MapScrubber(publishContext))
 	defer log.Trace("<<<<< setupDevice")
 
 	// TODO: Enhance CHAPI to work with a PublishInfo object rather than a volume

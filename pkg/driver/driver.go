@@ -22,7 +22,7 @@ import (
 	"github.com/hpe-storage/common-host-libs/concurrent"
 	"github.com/hpe-storage/common-host-libs/dbservice"
 	"github.com/hpe-storage/common-host-libs/dbservice/etcd"
-	log "github.com/hpe-storage/common-host-libs/logger"
+	logger "github.com/hpe-storage/common-host-libs/logger"
 	"github.com/hpe-storage/common-host-libs/model"
 	"github.com/hpe-storage/common-host-libs/storageprovider"
 	"github.com/hpe-storage/common-host-libs/storageprovider/csp"
@@ -34,10 +34,10 @@ import (
 )
 
 const (
-	defaultTTL = 60
+	defaultTTL          = 60
 	maxCSPClientTimeout = 360
-	alletra9000 = "alletra9000"
-	primera = "primera"
+	alletra9000         = "alletra9000"
+	primera             = "primera"
 )
 
 // Driver is the object that implements the CSI interfaces
@@ -64,9 +64,11 @@ type Driver struct {
 	KubeletRootDir    string
 }
 
-// NewDriver returns a driver that implements the gRPC endpoints required to support CSI
-func NewDriver(name, version, endpoint, flavorName string, nodeService bool, dbServer string, dbPort string, podMonitor bool, podMonitorInterval, cspClientTimeout int64) (*Driver, error) {
+var log *logger.Logr
 
+// NewDriver returns a driver that implements the gRPC endpoints required to support CSI
+func NewDriver(name, version, endpoint, flavorName string, nodeService bool, dbServer string, dbPort string, podMonitor bool, podMonitorInterval, cspClientTimeout int64, l *logger.Logr) (*Driver, error) {
+	log = l
 	// Get CSI driver
 	driver := getDriver(name, version, endpoint)
 

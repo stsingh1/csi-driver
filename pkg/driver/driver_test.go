@@ -8,7 +8,7 @@ import (
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/hpe-storage/common-host-libs/chapi"
 	"github.com/hpe-storage/common-host-libs/concurrent"
-	log "github.com/hpe-storage/common-host-libs/logger"
+	logger "github.com/hpe-storage/common-host-libs/logger"
 	"github.com/hpe-storage/common-host-libs/storageprovider"
 	"github.com/hpe-storage/common-host-libs/storageprovider/fake"
 	"github.com/hpe-storage/csi-driver/pkg/flavor"
@@ -20,13 +20,16 @@ const (
 	testsocket string = "/tmp/csi.sock"
 )
 
+var l *logger.Logr
+
 func TestPluginSuite(t *testing.T) {
 	endpoint := "unix://" + testsocket
 	if err := os.Remove(testsocket); err != nil && !os.IsNotExist(err) {
 		t.Fatalf("failed to remove unix domain socket file %s, error: %s", testsocket, err)
 	}
 
-	log.InitLogging("csi-test.log", &log.LogParams{Level: "trace"}, false)
+	_, l = logger.InitLogging("csi-test.log", &logger.LogParams{Level: "trace"}, false, true)
+	defer l.CloseTracer()
 
 	// driver := realDriver(t, endpoint)
 	// secretsFile := "csi-secrets.yaml"
@@ -51,6 +54,7 @@ func TestPluginSuite(t *testing.T) {
 	}
 
 	sanity.Test(t, config)
+
 }
 
 func createTarget(path string) (string, error) {
@@ -59,7 +63,7 @@ func createTarget(path string) (string, error) {
 
 // nolint: deadcode
 func realDriver(t *testing.T, endpoint string) *Driver {
-	driver, err := NewDriver("test-driver", "0.1", endpoint, flavor.Kubernetes, true, "", "", false, 0, 60)
+	driver, err := NewDriver("test-driver", "0.1", endpoint, flavor.Kubernetes, true, "", "", false, 0, 60, l)
 
 	if err != nil {
 		t.Fatal("Failed to initialize driver")

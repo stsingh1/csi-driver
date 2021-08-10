@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/hpe-storage/common-host-libs/dbservice/etcd"
-	log "github.com/hpe-storage/common-host-libs/logger"
+	logger "github.com/hpe-storage/common-host-libs/logger"
 	"github.com/hpe-storage/common-host-libs/tunelinux"
 	"github.com/hpe-storage/common-host-libs/util"
 
@@ -40,6 +40,8 @@ var (
 	podMonitorInterval string
 	cspClientTimeout   time.Duration
 
+	l *logger.Logr
+
 	// RootCmd is the main CSI command
 	RootCmd = &cobra.Command{
 		Use:              "csi",
@@ -48,20 +50,22 @@ var (
 		TraverseChildren: true,
 		Run: func(cmd *cobra.Command, args []string) {
 			isNode, _ := cmd.Flags().GetBool("node-service")
-			if isNode {
-				log.InitLogging(csiNodeLogFile, nil, true)
-			} else {
-				log.InitLogging(csiControllerLogFile, nil, true)
-			}
-			log.Info("**********************************************")
-			log.Info("*************** HPE CSI DRIVER ***************")
-			log.Info("**********************************************")
 
-			log.Infof(">>>>> CMDLINE Exec, args: %v", args)
-			defer log.Info("<<<<< CMDLINE Exec")
+			if isNode {
+				_, l = logger.InitLogging(csiNodeLogFile, nil, true, true)
+			} else {
+				_, l = logger.InitLogging(csiControllerLogFile, nil, true, true)
+			}
+			defer l.CloseTracer()
+			l.Info("**********************************************")
+			l.Info("*************** HPE CSI DRIVER ***************")
+			l.Info("**********************************************")
+
+			l.Infof(">>>>> CMDLINE Exec, args: %v", args)
+			defer l.Info("<<<<< CMDLINE Exec")
 
 			if err := csiCliHandler(cmd); err != nil {
-				log.Errorf("Failed to execute CLI handler, Err: %v", err.Error())
+				l.Errorf("Failed to execute CLI handler, Err: %v", err.Error())
 				os.Exit(1)
 			}
 		},
@@ -84,8 +88,8 @@ func init() {
 }
 
 func csiCliHandler(cmd *cobra.Command) error {
-	log.Trace(">>>>> csiCliHandler")
-	defer log.Trace("<<<<< csiCliHandler")
+	l.Trace(">>>>> csiCliHandler")
+	defer l.Trace("<<<<< csiCliHandler")
 
 	// Process cmd-line arguments for the CSI driver
 	driverName, _ := cmd.Flags().GetString("name")
@@ -101,7 +105,7 @@ func csiCliHandler(cmd *cobra.Command) error {
 	// Parse the endpoint
 	_, addr, err := driver.ParseEndpoint(endpoint)
 	if err != nil {
-		log.Errorf(err.Error())
+		l.Errorf(err.Error())
 		return err
 	}
 
@@ -151,14 +155,15 @@ func csiCliHandler(cmd *cobra.Command) error {
 		dbPort,
 		podMonitor,
 		monitorInterval,
-		int64(cspClientTimeout.Seconds()))
+		int64(cspClientTimeout.Seconds()),
+		l)
 	if err != nil {
 		return fmt.Errorf("Error instantiating plugin %v, Err: %v", driverName, err.Error())
 	}
-	log.Infof("About to start the CSI driver '%v with KubeletRootDirectory %s'", driverName, d.KubeletRootDir)
+	l.Infof("About to start the CSI driver '%v with KubeletRootDirectory %s'", driverName, d.KubeletRootDir)
 
 	d.Start(nodeService)
-	log.Infof("[%d] reply  : %v", pid, os.Args)
+	l.Infof("[%d] reply  : %v", pid, os.Args)
 	chanDone := d.StartScrubber(nodeService) // Start scrubber task
 
 	// Handle signals
@@ -168,10 +173,10 @@ func csiCliHandler(cmd *cobra.Command) error {
 		syscall.SIGTERM)
 
 	s := <-stop
-	log.Infof("Exiting due to signal [%v] notification for pid [%d]", s.String(), pid)
+	l.Infof("Exiting due to signal [%v] notification for pid [%d]", s.String(), pid)
 	d.StopScrubber(nodeService, chanDone) // Stop scrubber task
 	d.Stop(nodeService)
-	log.Infof("Stopped [%d]", pid)
+	l.Infof("Stopped [%d]", pid)
 	return nil
 }
 
@@ -179,7 +184,7 @@ func csiCliHandler(cmd *cobra.Command) error {
 func Main() {
 
 	if err := RootCmd.Execute(); err != nil {
-		log.Error("Failed to execute, err:", err.Error())
+		l.Error("Failed to execute, err:", err.Error())
 		os.Exit(1)
 	}
 }

@@ -10,7 +10,6 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
-	log "github.com/hpe-storage/common-host-libs/logger"
 )
 
 // NonBlockingGRPCServer defines the non-blocking gRPC server interfaces

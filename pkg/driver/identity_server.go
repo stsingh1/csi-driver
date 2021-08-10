@@ -5,7 +5,7 @@ package driver
 
 import (
 	"github.com/container-storage-interface/spec/lib/go/csi"
-	log "github.com/hpe-storage/common-host-libs/logger"
+
 	"golang.org/x/net/context"
 )
 

@@ -15,7 +15,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	log "github.com/hpe-storage/common-host-libs/logger"
+	logger "github.com/hpe-storage/common-host-libs/logger"
 	"github.com/hpe-storage/common-host-libs/model"
 	"github.com/hpe-storage/common-host-libs/storageprovider"
 	"github.com/hpe-storage/common-host-libs/util"
@@ -925,7 +925,7 @@ func (driver *Driver) controllerPublishVolume(
 	}
 
 	log.Tracef("Volume %s with ID %s published with the following details: %+v",
-		volume.Name, volume.ID, log.Scrubber(sensitive))
+		volume.Name, volume.ID, logger.Scrubber(sensitive))
 	return publishContext, nil
 }
 
